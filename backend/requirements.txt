@@ -1,0 +1,15 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4
+xgboost>=2.0
+shap>=0.45
+joblib>=1.3
+
+# Solo necesarios para el modelo de sentimiento (BETO).
+# Si por ahora solo vas a trabajar el churn, puedes comentar estas 3 líneas.
+transformers>=4.40
+torch>=2.2
+tensorflow>=2.16

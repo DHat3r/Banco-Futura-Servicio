@@ -1,0 +1,19 @@
+{
+  "num_features": [
+    "Age",
+    "Tenure",
+    "usage_frequency",
+    "support_calls",
+    "payment_delay",
+    "total_spend",
+    "last_interaction",
+    "support_calls_per_tenure",
+    "spend_per_tenure",
+    "risk_score_flags"
+  ],
+  "cat_features": [
+    "Gender",
+    "subscription_type",
+    "contract_length"
+  ]
+}
