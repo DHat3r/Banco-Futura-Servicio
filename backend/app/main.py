@@ -124,7 +124,7 @@ def predict_sentimiento(payload: SentimientoInput) -> dict:
     if not sentiment_model.modelo_listo():
         raise HTTPException(
             status_code=503,
-            detail="El modelo de sentimiento no está entrenado todavía. Corre scripts/train_sentiment.py",
+            detail="El modelo de sentimiento no está activo. Levanta la API con INSTALL_SENTIMENT=true (Docker) o ENABLE_SENTIMENT=true.",
         )
     try:
         return sentiment_model.predecir_sentimiento(payload.texto)
@@ -153,7 +153,7 @@ def mensajes_con_sentimiento(id_cliente: int):
     if not buscar_cliente(id_cliente):
         raise HTTPException(status_code=404, detail=f"Cliente {id_cliente} no encontrado")
     if not sentiment_model.modelo_listo():
-        raise HTTPException(status_code=503, detail="Modelo de sentimiento no disponible")
+        raise HTTPException(status_code=503, detail="el modelo de sentimiento no está activo")
     mensajes = obtener_mensajes(id_cliente)
     analisis = [sentiment_model.predecir_sentimiento(m) for m in mensajes]
     return {"id_cliente": id_cliente, "mensajes": mensajes, "analisis": analisis}
