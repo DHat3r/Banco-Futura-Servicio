@@ -35,8 +35,11 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 ### Con Docker (recomendado)
 
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
+
+En `.env` se configura `INSTALL_SENTIMENT` (activar el modelo de sentimiento) y `API_PORT` (puerto de la API). También se pueden pasar como variables de entorno, como en los ejemplos de abajo.
 
 La interfaz queda en `http://localhost:5173` (nginx reenvía `/api` a la API) y Swagger en `http://localhost:8000/docs`.
 

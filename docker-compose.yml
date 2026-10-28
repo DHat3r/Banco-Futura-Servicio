@@ -1,3 +1,5 @@
+# Configuración: copia .env.example a .env (INSTALL_SENTIMENT, API_PORT); compose lo lee solo.
+#
 # Uso:
 #   Sin modelo de sentimiento (imagen ligera):  docker compose up --build
 #   Con modelo de sentimiento (imagen pesada):  INSTALL_SENTIMENT=true docker compose up --build
