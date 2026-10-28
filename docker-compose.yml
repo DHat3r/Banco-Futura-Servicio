@@ -29,7 +29,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-      start_period: 20s
+      # Margen amplio: con sentimiento, el primer arranque descarga BETO (~440 MB) antes de responder.
+      # Durante este periodo los fallos no cuentan, y el servicio queda "healthy" en el primer chequeo que pasa.
+      start_period: 10m
 
   web:
     build:
