@@ -10,6 +10,7 @@
 | Modelos | XGBoost + SHAP, Spark MLlib, BETO (BERT en español) |
 | Backend | FastAPI, Pydantic |
 | Frontend | React + Vite |
+| Infraestructura | Docker Compose, nginx, GitHub Actions |
 
 ## Arquitectura
 
@@ -31,6 +32,30 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 
 ## Cómo ejecutarlo
 
+### Con Docker (recomendado)
+
+```bash
+docker compose up --build
+```
+
+La interfaz queda en `http://localhost:5173` (nginx reenvía `/api` a la API) y Swagger en `http://localhost:8000/docs`.
+
+Si el puerto 8000 está ocupado, cambia el puerto de la API (Swagger queda en `http://localhost:18000/docs`):
+
+```bash
+API_PORT=18000 docker compose up --build
+```
+
+En PowerShell: `$env:API_PORT=18000; docker compose up --build`.
+
+Para incluir el modelo de sentimiento (imagen pesada; descarga BETO, ~440 MB, en el primer arranque):
+
+```bash
+INSTALL_SENTIMENT=true docker compose up --build
+```
+
+### Sin Docker
+
 Backend (el modelo de churn ya viene entrenado en `backend/artifacts/`):
 
 ```bash
@@ -41,7 +66,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-Swagger en `http://localhost:8000/docs`.
+Swagger en `http://localhost:8000/docs`. El modelo de sentimiento necesita `pip install -r requirements-sentiment.txt` y `ENABLE_SENTIMENT=true`.
 
 Frontend:
 
@@ -55,6 +80,16 @@ npm run dev
 La interfaz queda en `http://localhost:5173`.
 
 Para reentrenar, descarga los datos según [`backend/data/README.md`](backend/data/README.md) y corre `python scripts/train_xgboost.py`. El modelo de sentimiento se entrena con `python scripts/train_sentiment.py` (descarga BETO, ~440 MB).
+
+## Tests
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+CI (GitHub Actions) ejecuta los tests del backend y el build del frontend en cada push y pull request.
 
 ## Decisiones técnicas
 
@@ -75,11 +110,9 @@ Modelo de churn (XGBoost), evaluado sobre 101.042 registros de test (`backend/ar
 
 ## Qué mejoraría con más tiempo
 
-- `docker compose up` para levantar backend y frontend con un solo comando.
-- Tests de la API y del cálculo de features.
-- CI con GitHub Actions.
 - Cargar el modelo desde MLflow / Unity Catalog en lugar del `.joblib` local.
-- Restringir CORS (hoy está abierto a cualquier origen).
+- Persistir los mensajes de clientes en una base de datos (hoy viven en memoria).
+- Migrar `class Config` de los schemas a `model_config` (Pydantic v2).
 
 ## Historia del repositorio
 
