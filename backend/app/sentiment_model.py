@@ -15,10 +15,14 @@ cacheado localmente). Antes de levantar la API por primera vez, corre:
 
 Eso entrena la cabeza de clasificación con las mismas 40 frases de ejemplo
 de tu notebook y la deja guardada en artifacts/sentiment_model/.
+
+El modelo solo se carga si la variable de entorno ENABLE_SENTIMENT es "true";
+si no, cargar_modelo() lanza ModeloNoEntrenadoError y la API arranca sin sentimiento.
 """
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 MODEL_NAME = "dccuchile/bert-base-spanish-wwm-cased"
@@ -37,6 +41,9 @@ class ModeloNoEntrenadoError(RuntimeError):
 def cargar_modelo() -> None:
     """Carga BETO (tokenizer + encoder) y la cabeza de clasificación entrenada."""
     global _tokenizer, _bert_modelo, _red
+
+    if os.getenv("ENABLE_SENTIMENT", "false").lower() != "true":
+        raise ModeloNoEntrenadoError("Sentimiento desactivado (ENABLE_SENTIMENT != true)")
 
     if not HEAD_PATH.exists():
         raise ModeloNoEntrenadoError(
