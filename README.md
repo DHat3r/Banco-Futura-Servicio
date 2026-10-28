@@ -82,7 +82,11 @@ npm run dev
 
 La interfaz queda en `http://localhost:5173`.
 
-Para reentrenar, descarga los datos según [`backend/data/README.md`](backend/data/README.md) y corre `python scripts/train_xgboost.py`. El modelo de sentimiento se entrena con `python scripts/train_sentiment.py` (descarga BETO, ~440 MB).
+Para reentrenar, descarga los datos según [`backend/data/README.md`](backend/data/README.md) y corre `python scripts/train_xgboost.py`. El modelo de sentimiento se entrena con reseñas de apps de bancos: primero `python scripts/review_scraper.py` (descarga ~13 mil reseñas de Google Play) y luego `python scripts/train_sentiment.py` (descarga BETO, ~440 MB). Con Docker, para que el modelo quede en tu disco:
+
+```bash
+docker compose run --rm -v "${PWD}/backend/scripts:/app/scripts" -v "${PWD}/backend/artifacts:/app/artifacts" api python scripts/train_sentiment.py
+```
 
 ## Tests
 
@@ -99,6 +103,7 @@ CI (GitHub Actions) ejecuta los tests del backend y el build del frontend en cad
 - **Dos modelos separados y no uno solo:** los datos de churn son tabulares y XGBoost los aprovecha mejor que BERT. BETO aporta una señal distinta, el sentimiento de un reclamo, y el frontend combina ambas.
 - **Features con las mismas reglas en todos lados:** `backend/app/features.py` replica la lógica de `databricks/pipeline/pipeline_02_silver.py`, para que la API calcule lo mismo que el pipeline.
 - **Volumen de Unity Catalog en vez de descargar de Kaggle en vivo:** Databricks Free Edition restringe la salida a internet.
+- **Supervisión débil para el sentimiento:** en vez de etiquetar a mano, las reseñas de Google Play se etiquetan por sus estrellas (1-2 negativo, 4-5 positivo, 3 se descarta). Es ruidoso, pero con miles de ejemplos el ruido se compensa. Se usan 10 apps de bancos de Chile, España, México y Argentina, y solo se guarda el texto (sin datos del autor).
 
 ## Resultados
 
@@ -110,6 +115,17 @@ Modelo de churn (XGBoost), evaluado sobre 101.042 registros de test (`backend/ar
 | F1 | 0,939 |
 | Precisión | 0,898 |
 | Recall | 0,984 |
+
+Modelo de sentimiento (BETO + red densa), entrenado con 3.200 reseñas balanceadas y evaluado sobre 800 que no vio (`backend/artifacts/sentiment_model/metrics.json`):
+
+| Métrica | Valor |
+|---------|-------|
+| Accuracy | 0,886 |
+| F1 | 0,877 |
+| Precisión | 0,956 |
+| Recall | 0,810 |
+
+Rinde mejor con textos parecidos a reseñas de apps (su dominio de entrenamiento); con comentarios sobre atención presencial la confianza baja.
 
 ## Qué mejoraría con más tiempo
 
