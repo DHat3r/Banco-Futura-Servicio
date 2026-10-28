@@ -1,0 +1,44 @@
+# Uso:
+#   Sin modelo de sentimiento (imagen ligera):  docker compose up --build
+#   Con modelo de sentimiento (imagen pesada):  INSTALL_SENTIMENT=true docker compose up --build
+#   Si el puerto 8000 está ocupado:             API_PORT=18000 docker compose up --build
+#
+# Servicios: web (frontend en :5173, reenvía /api a la API) y api (FastAPI, Swagger en :API_PORT/docs).
+
+services:
+  api:
+    build:
+      context: ./backend
+      args:
+        INSTALL_SENTIMENT: ${INSTALL_SENTIMENT:-false}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      ENABLE_SENTIMENT: ${INSTALL_SENTIMENT:-false}
+      CORS_ORIGINS: http://localhost:5173
+    volumes:
+      # CSV completo de clientes (solo lectura); si no existe, la API usa la muestra.
+      - ./backend/data:/app/data:ro
+      # Caché de modelos de Hugging Face para no volver a descargarlos en cada arranque.
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      # La imagen slim no trae curl, así que el chequeo usa Python.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  hf-cache:
