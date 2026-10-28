@@ -1,9 +1,13 @@
-# Configuración: copia .env.example a .env (INSTALL_SENTIMENT, API_PORT); compose lo lee solo.
+# Configuración: copia .env.example a .env y ajusta sus valores; compose lo lee solo.
+#   INSTALL_SENTIMENT=true   instala y activa el modelo de sentimiento (imagen pesada)
+#   API_PORT=18000           puerto de la API en tu máquina, si el 8000 está ocupado
+# Las expresiones ${VAR:-valor} toman la variable del .env; "valor" solo se usa si no está definida.
 #
-# Uso:
-#   Sin modelo de sentimiento (imagen ligera):  docker compose up --build
-#   Con modelo de sentimiento (imagen pesada):  INSTALL_SENTIMENT=true docker compose up --build
-#   Si el puerto 8000 está ocupado:             API_PORT=18000 docker compose up --build
+# Uso (desde esta carpeta):
+#   docker compose up -d --build     construye con la configuración del .env y levanta
+#   docker compose config            muestra el archivo con las variables ya resueltas
+#   docker compose logs -f api       sigue el arranque de la API
+#   docker compose down              detiene todo
 #
 # Servicios: web (frontend en :5173, reenvía /api a la API) y api (FastAPI, Swagger en :API_PORT/docs).
 
