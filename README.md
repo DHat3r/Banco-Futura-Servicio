@@ -116,16 +116,24 @@ Modelo de churn (XGBoost), evaluado sobre 101.042 registros de test (`backend/ar
 | Precisión | 0,898 |
 | Recall | 0,984 |
 
-Modelo de sentimiento (BETO + red densa), entrenado con 3.200 reseñas balanceadas y evaluado sobre 800 que no vio (`backend/artifacts/sentiment_model/metrics.json`):
+Modelo de sentimiento (BETO uncased + red densa), entrenado con 3.200 reseñas balanceadas más sus copias sin tildes, y evaluado sobre 800 que no vio, sin tildes como las procesa la API (`backend/artifacts/sentiment_model/metrics.json`):
 
 | Métrica | Valor |
 |---------|-------|
-| Accuracy | 0,886 |
-| F1 | 0,877 |
-| Precisión | 0,956 |
-| Recall | 0,810 |
+| Accuracy | 0,895 |
+| F1 | 0,886 |
+| Precisión | 0,970 |
+| Recall | 0,815 |
 
-Rinde mejor con textos parecidos a reseñas de apps (su dominio de entrenamiento); con comentarios sobre atención presencial la confianza baja.
+### Limitación encontrada y cómo se resolvió
+
+Probando la interfaz, el reclamo *"me gustaria saber si me puedo desvincular a este banco DADO SU PESIMO SERVICIO"* salía **positivo**. Comparando variantes de la frase:
+
+- El modelo original usaba BETO **cased**, que parte las palabras en MAYÚSCULAS en pedazos sin sentido (`PESIMO` → `PES ##IM ##O`). Los clientes enojados escriben justamente así.
+- Al cambiar a BETO **uncased** se arreglaron las mayúsculas, pero las palabras **con** tilde empezaron a fallar (`pésimo servicio` → positivo), probablemente porque BETO uncased se preentrenó sin tildes.
+- Solución: el entrenamiento agrega copias sin tildes de cada reseña (*data augmentation*, aplicada solo a train para evitar *data leakage*), y la API quita las tildes antes de predecir. Ahora `PESIMO SERVICIO`, `pésimo servicio` y `Pésimo servicio` dan el mismo resultado.
+
+La función que quita las tildes (`quitar_tildes`) conserva la ñ, y es la misma en el entrenamiento y en la API para que el modelo vea en producción lo mismo que aprendió.
 
 ## Qué mejoraría con más tiempo
 

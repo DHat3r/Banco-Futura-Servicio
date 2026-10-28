@@ -35,10 +35,10 @@ from sklearn.model_selection import train_test_split
 from transformers import BertModel, BertTokenizer, logging
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from app.sentiment_model import MODEL_NAME, quitar_tildes  # noqa: E402 - mismo modelo que la API
 
 logging.set_verbosity_error()
 
-MODEL_NAME = "dccuchile/bert-base-spanish-wwm-cased"
 DATASET_PATH = Path(__file__).resolve().parent.parent / "data" / "resenas_bancos.csv"
 ARTIFACTS_DIR = Path(__file__).resolve().parent.parent / "artifacts" / "sentiment_model"
 RANDOM_STATE = 42
@@ -68,6 +68,27 @@ def generar_embeddings(textos: list[str], tokenizador, bert_modelo) -> np.ndarra
     return np.vstack(embeddings)
 
 
+def aumentar_sin_tildes(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrega una copia sin tildes de cada reseña que las tenga (data augmentation).
+
+    Los clientes enojados suelen escribir sin tildes ("pesimo"), y BETO las trata
+    como palabras distintas de "pésimo". Así el modelo aprende ambas formas.
+    """
+    copias = df.assign(texto=df["texto"].map(quitar_tildes))
+    copias = copias[copias["texto"] != df["texto"]]
+    return pd.concat([df, copias], ignore_index=True)
+
+
+def evaluar(modelo, X: np.ndarray, y: np.ndarray) -> dict:
+    y_pred = (modelo.predict(X, verbose=0).ravel() >= 0.5).astype(int)
+    return {
+        "accuracy": accuracy_score(y, y_pred),
+        "precision": precision_score(y, y_pred),
+        "recall": recall_score(y, y_pred),
+        "f1_score": f1_score(y, y_pred),
+    }
+
+
 def main(max_por_clase: int) -> None:
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -80,12 +101,21 @@ def main(max_por_clase: int) -> None:
     bert_modelo = BertModel.from_pretrained(MODEL_NAME, ignore_mismatched_sizes=True)
     bert_modelo.eval()
 
-    print("3. Generando embeddings...")
-    X = generar_embeddings(df["texto"].tolist(), tokenizador, bert_modelo)
-    y = df["etiqueta"].to_numpy(dtype=float)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=RANDOM_STATE
+    # Se separa ANTES de aumentar: si la copia sin tildes de una reseña de test quedara
+    # en train, el modelo la habría "visto" y la métrica saldría inflada (data leakage).
+    df_train, df_test = train_test_split(
+        df, test_size=0.2, stratify=df["etiqueta"], random_state=RANDOM_STATE
     )
+    df_train = aumentar_sin_tildes(df_train)
+    print(f"   train con copias sin tildes: {len(df_train)} | test: {len(df_test)}")
+
+    print("3. Generando embeddings...")
+    X_train = generar_embeddings(df_train["texto"].tolist(), tokenizador, bert_modelo)
+    y_train = df_train["etiqueta"].to_numpy(dtype=float)
+    X_test = generar_embeddings(df_test["texto"].tolist(), tokenizador, bert_modelo)
+    y_test = df_test["etiqueta"].to_numpy(dtype=float)
+    # El mismo test escrito sin tildes: mide si el modelo resiste esa forma de escribir.
+    X_test_sin_tildes = generar_embeddings(df_test["texto"].map(quitar_tildes).tolist(), tokenizador, bert_modelo)
 
     print("4. Construyendo y entrenando la red (16 -> 8 -> 1, sigmoide)...")
     tf.keras.utils.set_random_seed(RANDOM_STATE)
@@ -101,12 +131,10 @@ def main(max_por_clase: int) -> None:
     modelo.fit(X_train, y_train, validation_split=0.1, epochs=100, callbacks=[parada_temprana], verbose=0)
 
     print("5. Evaluando en el conjunto de test...")
-    y_pred = (modelo.predict(X_test, verbose=0).ravel() >= 0.5).astype(int)
     metricas = {
-        "accuracy": accuracy_score(y_test, y_pred),
-        "precision": precision_score(y_test, y_pred),
-        "recall": recall_score(y_test, y_pred),
-        "f1_score": f1_score(y_test, y_pred),
+        **evaluar(modelo, X_test, y_test),
+        "test_sin_tildes": evaluar(modelo, X_test_sin_tildes, y_test),
+        "modelo_base": MODEL_NAME,
         "n_train": int(len(X_train)),
         "n_test": int(len(X_test)),
         "dataset": DATASET_PATH.name,
