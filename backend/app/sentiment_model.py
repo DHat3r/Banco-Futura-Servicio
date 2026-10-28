@@ -13,8 +13,8 @@ cacheado localmente). Antes de levantar la API por primera vez, corre:
 
     python scripts/train_sentiment.py
 
-Eso entrena la cabeza de clasificación con las mismas 40 frases de ejemplo
-de tu notebook y la deja guardada en artifacts/sentiment_model/.
+Eso entrena la cabeza de clasificación con reseñas reales de apps de bancos
+(ver scripts/review_scraper.py) y la deja guardada en artifacts/sentiment_model/.
 
 El modelo solo se carga si la variable de entorno ENABLE_SENTIMENT es "true";
 si no, cargar_modelo() lanza ModeloNoEntrenadoError y la API arranca sin sentimiento.
