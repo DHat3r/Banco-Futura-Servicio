@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.9293857999643712,
+  "precision": 0.8981848936308633,
+  "recall": 0.9844025740209272,
+  "f1_score": 0.9393194594456682,
+  "roc_auc": 0.9533305012781367,
+  "scale_pos_weight": 0.8011435294327364,
+  "n_train_rows": 404164,
+  "n_test_rows": 101042,
+  "trained_at": "2026-06-28T18:23:28.709763",
+  "best_params": {
+    "subsample": 0.9,
+    "reg_lambda": 2.0,
+    "reg_alpha": 0.1,
+    "n_estimators": 200,
+    "min_child_weight": 5,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "gamma": 0.1,
+    "colsample_bytree": 0.9
+  }
+}
