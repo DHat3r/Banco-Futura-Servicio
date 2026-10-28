@@ -9,23 +9,39 @@ export default function ClientePanel() {
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [error, setError] = useState(null);
+  const [avisoMensajes, setAvisoMensajes] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // El endpoint de mensajes puede responder 503 si el modelo de sentimiento
+  // está desactivado; en ese caso solo mostramos un aviso y no perdemos el churn.
+  async function cargarMensajes(id) {
+    try {
+      const msgs = await obtenerMensajesCliente(id);
+      setMensajes(msgs.analisis || []);
+      setAvisoMensajes(null);
+    } catch (err) {
+      setMensajes([]);
+      setAvisoMensajes("Análisis de sentimiento no disponible: " + err.message);
+    }
+  }
 
   async function buscarCliente() {
     setLoading(true);
     setError(null);
+    setAvisoMensajes(null);
     setChurnData(null);
     setMensajes([]);
+    let data;
     try {
-      const data = await churnPorId(Number(idCliente));
-      setChurnData(data);
-      const msgs = await obtenerMensajesCliente(Number(idCliente));
-      setMensajes(msgs.analisis || []);
+      data = await churnPorId(Number(idCliente));
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
+      return;
     }
+    setChurnData(data);
+    await cargarMensajes(Number(idCliente));
+    setLoading(false);
   }
 
   async function enviarMensaje() {
@@ -33,11 +49,11 @@ export default function ClientePanel() {
     try {
       await agregarMensaje(Number(idCliente), nuevoMensaje);
       setNuevoMensaje("");
-      const msgs = await obtenerMensajesCliente(Number(idCliente));
-      setMensajes(msgs.analisis || []);
     } catch (err) {
       setError(err.message);
+      return;
     }
+    await cargarMensajes(Number(idCliente));
   }
 
   return (
@@ -68,6 +84,7 @@ export default function ClientePanel() {
       {churnData && (
         <div style={{ marginTop: "1.5rem" }}>
           <h3 className="result__subtitle">Mensajes del cliente</h3>
+          {avisoMensajes && <p className="panel__hint">{avisoMensajes}</p>}
 
           <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
             <input
@@ -86,7 +103,7 @@ export default function ClientePanel() {
             </button>
           </div>
 
-          {mensajes.length === 0 && (
+          {mensajes.length === 0 && !avisoMensajes && (
             <p className="panel__hint">Sin mensajes aún para este cliente.</p>
           )}
 
