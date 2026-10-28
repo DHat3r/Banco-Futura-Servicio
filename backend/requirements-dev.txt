@@ -3,3 +3,6 @@
 # Herramientas de desarrollo: tests y cliente HTTP para probar la API.
 pytest==9.2.0
 httpx==0.28.1
+
+# Descarga de reseñas para el dataset de sentimiento (scripts/review_scraper.py).
+google-play-scraper==1.2.7
