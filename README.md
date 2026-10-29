@@ -1,5 +1,7 @@
 # Banco Futura · Predicción de churn bancario
 
+[![CI](https://github.com/DHat3r/Banco-Futura-Servicio/actions/workflows/ci.yml/badge.svg)](https://github.com/DHat3r/Banco-Futura-Servicio/actions/workflows/ci.yml)
+
 > Plataforma de extremo a extremo que predice qué clientes de un banco están por irse y prioriza a quién contactar, combinando un modelo de churn (XGBoost) con el sentimiento de sus reclamos (BETO).
 
 ## Stack
@@ -35,6 +37,8 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 ### Con Docker (recomendado)
 
 ```bash
+git clone https://github.com/DHat3r/Banco-Futura-Servicio.git
+cd Banco-Futura-Servicio
 cp .env.example .env
 docker compose up --build
 ```
