@@ -1,0 +1,7 @@
+# Finales de línea: el repo guarda texto con LF y cada sistema lo convierte al hacer checkout,
+# sin depender de cómo esté configurado git en cada máquina.
+* text=auto
+
+# Modelos y binarios: nunca convertir.
+*.keras binary
+*.joblib binary
