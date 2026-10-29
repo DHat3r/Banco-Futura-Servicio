@@ -1,8 +1,8 @@
 """
 Carga del modelo de sentimiento (BETO + cabeza de clasificación) e inferencia.
 
-Es la versión "productizada" de tu notebook BERT_Entrenamiento: mismo BETO
-(``dccuchile/bert-base-spanish-wwm-cased``), mismo embedding (token [CLS]),
+Es la versión "productizada" de tu notebook BERT_Entrenamiento: BETO
+(``dccuchile/bert-base-spanish-wwm-uncased``), mismo embedding (token [CLS]),
 misma arquitectura de red encima (16 -> 8 -> 1, sigmoide). La diferencia es
 que aquí la red ya entrenada se carga una sola vez al iniciar la API, en vez
 de entrenarse cada vez.
@@ -13,8 +13,8 @@ cacheado localmente). Antes de levantar la API por primera vez, corre:
 
     python scripts/train_sentiment.py
 
-Eso entrena la cabeza de clasificación con las mismas 40 frases de ejemplo
-de tu notebook y la deja guardada en artifacts/sentiment_model/.
+Eso entrena la cabeza de clasificación con reseñas reales de apps de bancos
+(ver scripts/review_scraper.py) y la deja guardada en artifacts/sentiment_model/.
 
 El modelo solo se carga si la variable de entorno ENABLE_SENTIMENT es "true";
 si no, cargar_modelo() lanza ModeloNoEntrenadoError y la API arranca sin sentimiento.
@@ -23,9 +23,23 @@ si no, cargar_modelo() lanza ModeloNoEntrenadoError y la API arranca sin sentimi
 from __future__ import annotations
 
 import os
+import unicodedata
 from pathlib import Path
 
-MODEL_NAME = "dccuchile/bert-base-spanish-wwm-cased"
+# Versión uncased: pasa el texto a minúsculas antes de tokenizar, así "PÉSIMO" y "pésimo"
+# dan el mismo embedding. La cased partía las palabras en MAYÚSCULAS en pedazos sin sentido.
+# Lo usan esta API y scripts/train_sentiment.py: deben ser siempre el mismo modelo.
+MODEL_NAME = "dccuchile/bert-base-spanish-wwm-uncased"
+
+# Acento agudo y diéresis. La virgulilla (U+0303) no está: así la ñ se conserva.
+_MARCAS_A_QUITAR = {"́", "̈"}
+
+
+def quitar_tildes(texto: str) -> str:
+    """'Pésimo atención, año' -> 'Pesimo atencion, año' (conserva la ñ)."""
+    descompuesto = unicodedata.normalize("NFD", texto)
+    sin_tildes = "".join(c for c in descompuesto if c not in _MARCAS_A_QUITAR)
+    return unicodedata.normalize("NFC", sin_tildes)
 ARTIFACTS_DIR = Path(__file__).resolve().parent.parent / "artifacts" / "sentiment_model"
 HEAD_PATH = ARTIFACTS_DIR / "red_sentimiento.keras"
 
@@ -79,7 +93,9 @@ def predecir_sentimiento(texto: str) -> dict:
     if _red is None:
         raise ModeloNoEntrenadoError("El modelo de sentimiento no está cargado todavía.")
 
-    embedding = _obtener_embedding(texto).reshape(1, -1)
+    # Sin tildes: BETO uncased da embeddings pobres para palabras con tilde ("pésimo"
+    # salía positivo y "pesimo" negativo). El texto original se devuelve sin cambios.
+    embedding = _obtener_embedding(quitar_tildes(texto)).reshape(1, -1)
     score = float(_red.predict(embedding, verbose=0)[0][0])
     sentimiento = "positivo" if score >= 0.5 else "negativo"
 
