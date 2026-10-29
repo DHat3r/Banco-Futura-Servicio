@@ -1,0 +1,15 @@
+# Entornos virtuales y caches de Python
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# Secretos: nunca deben entrar en la imagen
+.env
+
+# Tests
+tests/.pytest_cache
+
+# Datos: solo se incluye la muestra; el CSV completo se monta como volumen en compose
+data/*.csv
+!data/sample_clientes.csv

@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
 venv/
 
 # Node
@@ -13,6 +14,7 @@ dist/
 
 # Datos: se descargan de Kaggle (ver backend/data/README.md)
 *.csv
+!backend/data/sample_clientes.csv
 *.zip
 
 # Editor / SO

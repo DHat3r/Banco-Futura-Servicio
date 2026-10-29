@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Herramientas de desarrollo: tests y cliente HTTP para probar la API.
+pytest==9.2.0
+httpx==0.28.1

@@ -1,0 +1,10 @@
+-r requirements.txt
+
+# Opcional: solo para el modelo de sentimiento (BETO + red en Keras).
+# Si solo trabajas el churn, no hace falta instalar este archivo.
+# TensorFlow debe traer Keras 3.15.x compatible con artifacts/sentiment_model/red_sentimiento.keras
+# (el modelo se guardó con Keras 3.15.0; por eso keras va fijado explícitamente).
+transformers==4.57.6
+torch==2.15.0
+tensorflow==2.21.0
+keras==3.15.0

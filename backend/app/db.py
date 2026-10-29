@@ -1,23 +1,34 @@
-import pandas as pd
+"""
+Acceso a datos de clientes y mensajes (almacenamiento en memoria).
+
+Los clientes se cargan desde el CSV completo si existe; si no, desde la muestra
+versionada en git (`sample_clientes.csv`). Los mensajes solo viven en memoria.
+"""
+
+from __future__ import annotations
+
 from pathlib import Path
+
+import pandas as pd
+
+from app.features import rename_raw_columns
 
 _clientes: dict = {}
 _mensajes: dict[int, list[str]] = {}
 
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+FULL_CSV = DATA_DIR / "customer_churn_dataset-training-master.csv"
+SAMPLE_CSV = DATA_DIR / "sample_clientes.csv"
+
+
 def cargar_clientes():
     global _clientes
-    csv = Path(__file__).parent.parent / "data" / "customer_churn_dataset-training-master.csv"
+    csv = FULL_CSV if FULL_CSV.exists() else SAMPLE_CSV
     df = pd.read_csv(csv)
-    # Renombrar columnas igual que el pipeline
-    df = df.rename(columns={
-        "Usage Frequency": "usage_frequency",
-        "Support Calls": "support_calls",
-        "Payment Delay": "payment_delay",
-        "Subscription Type": "subscription_type",
-        "Contract Length": "contract_length",
-        "Total Spend": "total_spend",
-        "Last Interaction": "last_interaction",
-    })
+    df = rename_raw_columns(df)
+    df = df.dropna(subset=["CustomerID"])
+    # Sin la fila vacía, las columnas vuelven a ser enteras (62 y no 62.0).
+    df = df.convert_dtypes()
     _clientes = df.set_index("CustomerID").to_dict(orient="index")
 
 def buscar_cliente(id_cliente: int) -> dict | None:
