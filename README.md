@@ -4,6 +4,12 @@
 
 > Plataforma de extremo a extremo que predice qué clientes de un banco están por irse y prioriza a quién contactar, combinando un modelo de churn (XGBoost) con el sentimiento de sus reclamos (BETO).
 
+![Mesa de riesgo: formulario del cliente y ficha con el sello de riesgo alto y los factores que más influyeron](docs/capturas/mesa-de-riesgo.png)
+
+| Modo oscuro | Celular |
+|---|---|
+| ![Mesa de riesgo en modo oscuro](docs/capturas/mesa-de-riesgo-oscuro.png) | <img src="docs/capturas/mesa-de-riesgo-movil.png" alt="Ficha de riesgo en el celular" width="260"> |
+
 ## Stack
 
 | Capa | Tecnología |
