@@ -61,13 +61,13 @@ export default function ClientePanel() {
       <div className="panel__eyebrow">Expediente 03</div>
       <h2 className="panel__title">Buscar cliente por ID</h2>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+      <div className="busqueda">
         <input
           type="number"
           placeholder="ID del cliente"
+          aria-label="ID del cliente"
           value={idCliente}
           onChange={(e) => setIdCliente(e.target.value)}
-          style={{ flex: 1 }}
         />
         <button
           className="btn btn--primary"
