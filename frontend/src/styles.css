@@ -1,34 +1,65 @@
 /* ---------------------------------------------------------------
    Banco Futura · Mesa de riesgo
    Identidad: expediente bancario / ficha de riesgo, no dashboard
-   genérico. Papel frío (no cream), tinta verde-negra, sellos de
-   nivel de riesgo como elemento de marca. Serif con carácter
+   genérico. Papel rosado claro, tinta color vino y rosa frambuesa
+   como marca; los sellos de nivel de riesgo conservan sus colores
+   (verde, ámbar, rojo ladrillo) para que la marca no se confunda
+   con una alerta. Serif con carácter
    (Fraunces) para títulos y números grandes, Inter para texto de
    interfaz, IBM Plex Mono para cifras de ficha.
    --------------------------------------------------------------- */
 
 :root {
-  --bg: #eceee6;
-  --surface: #fbfbf7;
+  --bg: #f6eef0;
+  --surface: #fdf9fa;
   --surface-raised: #ffffff;
-  --ink: #1f2b22;
-  --ink-soft: #56635a;
-  --ink-faint: #8b9489;
-  --border: #d6d8cc;
-  --border-strong: #b9bcae;
+  --ink: #2d1a21;
+  --ink-soft: #6a5258;
+  --ink-faint: #9b8389;
+  --border: #ecd9de;
+  --border-strong: #d4b6be;
 
-  --brand: #2f6f5e;
-  --brand-ink: #16332b;
+  --brand: #c4506f;
+  --brand-ink: #5c1f33;
 
-  --risk-bajo: #2f6f5e;
+  --risk-bajo: #2f7a64;
   --risk-medio: #b6791f;
-  --risk-alto: #ab3527;
+  --risk-alto: #b02a1c;
 
   --font-display: "Fraunces", serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
 
+  --on-brand: #fff5f7;
+
   --radius: 14px;
+
+  color-scheme: light;
+}
+
+/* Modo oscuro: la misma ficha, impresa en papel nocturno. Solo cambian los tokens. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1317;
+    --surface: #251a1f;
+    --surface-raised: #2e2127;
+    --ink: #f6e9ed;
+    --ink-soft: #c4aab2;
+    --ink-faint: #8f7880;
+    --border: #3d2b33;
+    --border-strong: #5a424b;
+
+    --brand: #f28aa5;
+    --brand-ink: #fbd0dc;
+
+    --risk-bajo: #7fc8ab;
+    --risk-medio: #e0a64a;
+    --risk-alto: #ff7a63;
+
+    --on-brand: #1c1317;
+
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -116,6 +147,37 @@ body {
   .grid-main {
     grid-template-columns: 1fr;
   }
+
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ---------- búsqueda por ID ---------- */
+
+.busqueda {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.busqueda input {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ---------- panel ---------- */
@@ -167,6 +229,8 @@ body {
 .field {
   display: flex;
   flex-direction: column;
+  /* Campos alineados abajo: si una etiqueta ocupa dos líneas, el campo no se desfasa del vecino. */
+  justify-content: flex-end;
   gap: 6px;
 }
 
@@ -177,6 +241,7 @@ body {
 
 .field input,
 .field select,
+.busqueda input,
 .textarea {
   font-family: var(--font-mono);
   font-size: 14px;
@@ -226,7 +291,7 @@ body {
 
 .btn--primary {
   background: var(--brand-ink);
-  color: #fbfbf7;
+  color: var(--on-brand);
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -329,12 +394,12 @@ body {
 }
 
 .ledger__impact--up {
-  background: rgba(171, 53, 39, 0.12);
+  background: color-mix(in srgb, var(--risk-alto) 14%, transparent);
   color: var(--risk-alto);
 }
 
 .ledger__impact--down {
-  background: rgba(47, 111, 94, 0.12);
+  background: color-mix(in srgb, var(--risk-bajo) 14%, transparent);
   color: var(--risk-bajo);
 }
 
