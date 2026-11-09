@@ -1,0 +1,57 @@
+# Blueprint de Render: describe la demo en línea (API de churn + frontend).
+# En Render: New > Blueprint > elige este repo. Crea los dos servicios y te pide
+# las dos variables marcadas con "sync: false" (ver los pasos de abajo).
+#
+# Solo se despliega el modelo de churn. El de sentimiento (BETO + TensorFlow) necesita
+# más de 2 GB de RAM y el plan gratis tiene 512 MB, así que queda apagado aquí y
+# sigue disponible en local con INSTALL_SENTIMENT=true (ver README).
+#
+# Cada servicio necesita la URL del otro, y esa URL solo existe después de crearlo.
+# Por eso el primer despliegue se hace en dos pasos:
+#   1. Crea el Blueprint. Cuando pida los valores, escribe uno provisional (por ejemplo "pendiente").
+#   2. Copia la URL de cada servicio y pégala en la variable del otro:
+#        banco-futura-api -> CORS_ORIGINS = https://<url-del-frontend>   (sin "/" al final)
+#        banco-futura-web -> VITE_API_URL = https://<url-de-la-api>      (sin "/" al final)
+#      Guarda: la API se reinicia y el frontend se vuelve a compilar con la URL nueva.
+#
+# Plan gratis: el servicio web se duerme tras 15 minutos sin visitas y el primer acceso
+# tarda cerca de un minuto en despertar. El sitio estático está siempre disponible.
+
+services:
+  # API de FastAPI con el modelo XGBoost (pipeline.joblib viene en el repo, no se entrena aquí).
+  - type: web
+    name: banco-futura-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ENABLE_SENTIMENT
+        value: "false"
+      # El Dockerfile escucha en el 8000; Render detecta el puerto por esta variable (por defecto 10000).
+      - key: PORT
+        value: "8000"
+      # Origen exacto del frontend, para que el navegador pueda llamar a la API (CORS).
+      - key: CORS_ORIGINS
+        sync: false
+
+  # Frontend React + Vite compilado a estáticos.
+  - type: web
+    name: banco-futura-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    # La app es de una sola página: cualquier ruta se resuelve en index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Vite incrusta esta URL en el bundle al compilar (por eso hay que recompilar al cambiarla).
+      - key: VITE_API_URL
+        sync: false
