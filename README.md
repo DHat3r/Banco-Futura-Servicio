@@ -38,6 +38,18 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 | `frontend/` | Interfaz que junta ambas señales para priorizar clientes |
 | `docs/` | Documentación de la entrega API + frontend ([detalles](docs/entrega-api-frontend.md)) |
 
+## Demo en línea
+
+<!-- Cuando exista el despliegue, agrega aquí el enlace: - Demo: https://<url-de-banco-futura-web>.onrender.com -->
+
+El proyecto está preparado para desplegarse en [Render](https://render.com) (plan gratis) con el modelo de churn. El modelo de sentimiento no se despliega allí: BETO y TensorFlow necesitan más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
+
+- **Cabe en el plan gratis:** la API usa unos 157 MiB de RAM. Se midió con el contenedor limitado a 512 MiB y 30 peticiones de churn; no hubo cierres por falta de memoria.
+- **Primer acceso lento:** tras 15 minutos sin visitas el servicio de la API se duerme, y la primera visita tarda cerca de un minuto en despertarlo.
+- **Datos de ejemplo:** la demo usa `backend/data/sample_clientes.csv` (la muestra versionada), no el CSV completo de Kaggle.
+
+Para desplegar tu propia copia, el archivo [`render.yaml`](render.yaml) describe los dos servicios (API y frontend). En Render: *New > Blueprint*, elige tu fork y, cuando pida `CORS_ORIGINS` y `VITE_API_URL`, completa cada una con la URL del otro servicio (los pasos están como comentarios al inicio del archivo).
+
 ## Cómo ejecutarlo
 
 ### Con Docker (recomendado)
