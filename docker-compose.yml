@@ -17,6 +17,7 @@ services:
       context: ./backend
       args:
         INSTALL_SENTIMENT: ${INSTALL_SENTIMENT:-false}
+        INSTALL_SENTIMENT_LIVIANO: ${INSTALL_SENTIMENT_LIVIANO:-false}
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
