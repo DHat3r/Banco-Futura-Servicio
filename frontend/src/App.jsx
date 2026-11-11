@@ -58,7 +58,7 @@ export default function App() {
         <ChurnResult resultado={resultadoChurn} error={errorChurn} />
       </main>
 
-      <SentimentPanel />
+      <SentimentPanel estadoAPI={estadoAPI} />
       <ClientePanel />
       <footer className="footer">
         Proyecto académico · Equipo 4 · Data Driven Banking

@@ -20,8 +20,10 @@ export function predecirChurn(cliente) {
   return postJSON("/predict/churn", cliente);
 }
 
-export function predecirSentimiento(texto) {
-  return postJSON("/predict/sentimiento", { texto });
+// modelo: "completo" (BETO en PyTorch + Keras) o "liviano" (BETO int8 en ONNX).
+export function predecirSentimiento(texto, modelo = "completo") {
+  const ruta = modelo === "liviano" ? "/predict/sentimiento/liviano" : "/predict/sentimiento";
+  return postJSON(ruta, { texto });
 }
 
 export async function obtenerMetadataCliente() {
