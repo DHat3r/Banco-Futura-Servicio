@@ -1,10 +1,10 @@
-# Blueprint de Render: describe la demo en línea (API de churn + frontend).
+# Blueprint de Render: describe la demo en línea (API de churn y sentimiento + frontend).
 # En Render: New > Blueprint > elige este repo. Crea los dos servicios y te pide
 # las dos variables marcadas con "sync: false" (ver los pasos de abajo).
 #
-# Solo se despliega el modelo de churn. El de sentimiento (BETO + TensorFlow) necesita
-# más de 2 GB de RAM y el plan gratis tiene 512 MB, así que queda apagado aquí y
-# sigue disponible en local con INSTALL_SENTIMENT=true (ver README).
+# Modelos: churn (XGBoost) y BETO liviano (BETO cuantizado a int8 en ONNX), que caben
+# en los 512 MB del plan gratis. El BETO completo (PyTorch + TensorFlow) necesita más de
+# 2 GB de RAM, así que queda apagado aquí y sigue disponible en local con INSTALL_SENTIMENT=true.
 #
 # Cada servicio necesita la URL del otro, y esa URL solo existe después de crearlo.
 # Por eso el primer despliegue se hace en dos pasos:
@@ -30,6 +30,10 @@ services:
     envVars:
       - key: ENABLE_SENTIMENT
         value: "false"
+      # Render pasa las variables de entorno al Dockerfile como build args: con esto la imagen
+      # instala onnxruntime y descarga el encoder del release sentimiento-liviano-v1.
+      - key: INSTALL_SENTIMENT_LIVIANO
+        value: "true"
       # El Dockerfile escucha en el 8000; Render detecta el puerto por esta variable (por defecto 10000).
       - key: PORT
         value: "8000"

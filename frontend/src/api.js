@@ -20,8 +20,10 @@ export function predecirChurn(cliente) {
   return postJSON("/predict/churn", cliente);
 }
 
-export function predecirSentimiento(texto) {
-  return postJSON("/predict/sentimiento", { texto });
+// modelo: "completo" (BETO en PyTorch + Keras) o "liviano" (BETO int8 en ONNX).
+export function predecirSentimiento(texto, modelo = "completo") {
+  const ruta = modelo === "liviano" ? "/predict/sentimiento/liviano" : "/predict/sentimiento";
+  return postJSON(ruta, { texto });
 }
 
 export async function obtenerMetadataCliente() {
@@ -34,6 +36,16 @@ export async function obtenerEstadoAPI() {
   const res = await fetch(`${API_URL}/health`);
   if (!res.ok) throw new Error("API no disponible");
   return res.json();
+}
+
+// Una página de la cartera de clientes; filtroId filtra los IDs que empiezan así.
+export async function obtenerCartera(pagina, filtroId = "") {
+  const params = new URLSearchParams({ pagina: String(pagina) });
+  if (filtroId) params.set("id", filtroId);
+  const res = await fetch(`${API_URL}/clientes?${params}`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`No se pudo cargar la cartera (error ${res.status})`);
+  return data;
 }
 
 export async function churnPorId(id_cliente) {

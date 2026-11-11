@@ -1,0 +1,46 @@
+{
+  "original": {
+    "test": {
+      "accuracy": 0.88875,
+      "precision": 0.9481268011527377,
+      "recall": 0.8225,
+      "f1_score": 0.8808567603748326
+    },
+    "test_sin_tildes": {
+      "accuracy": 0.895,
+      "precision": 0.9702380952380952,
+      "recall": 0.815,
+      "f1_score": 0.8858695652173914
+    }
+  },
+  "liviano": {
+    "test": {
+      "accuracy": 0.88,
+      "precision": 0.9470588235294117,
+      "recall": 0.805,
+      "f1_score": 0.8702702702702703
+    },
+    "test_sin_tildes": {
+      "accuracy": 0.88625,
+      "precision": 0.963963963963964,
+      "recall": 0.8025,
+      "f1_score": 0.8758526603001364
+    }
+  },
+  "coincidencia_entre_modelos": {
+    "test": 0.97375,
+    "test_sin_tildes": 0.98125
+  },
+  "latencia_ms_por_resena": {
+    "original": 28.2,
+    "liviano": 5.6
+  },
+  "tamano_mb": {
+    "encoder_fp32": 437.3,
+    "encoder_int8": 110.0
+  },
+  "modelo_base": "dccuchile/bert-base-spanish-wwm-uncased",
+  "cuantizacion": "dinámica int8 (onnxruntime.quantization.quantize_dynamic)",
+  "n_test": 800,
+  "exportado_en": "2026-11-11T11:09:36"
+}

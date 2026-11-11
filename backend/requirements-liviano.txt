@@ -1,0 +1,4 @@
+# BETO liviano (opcional): BETO cuantizado a int8 en ONNX, sin PyTorch ni TensorFlow.
+# Se activa con: INSTALL_SENTIMENT_LIVIANO=true docker compose up --build
+onnxruntime==1.31.1
+tokenizers==0.22.2

@@ -4,6 +4,8 @@ API — Banco Futura · Churn & Sentimiento
 Dos modelos independientes detrás de un mismo API gateway:
   - POST /predict/churn         -> XGBoost, predicción de abandono de clientes
   - POST /predict/sentimiento   -> BETO, sentimiento de un reclamo/mensaje
+  - POST /predict/sentimiento/liviano -> BETO cuantizado en ONNX: casi las mismas respuestas,
+                                         sin PyTorch ni TensorFlow (cabe en 512 MB)
 
 Local dev:
     uvicorn app.main:app --reload --port 8000
@@ -17,12 +19,12 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import churn_model, sentiment_model
+from app import churn_model, sentiment_liviano, sentiment_model
 from app import db as db_module
-from app.db import buscar_cliente, cargar_clientes, guardar_mensaje, obtener_mensajes
+from app.db import buscar_cliente, cargar_clientes, guardar_mensaje, listar_clientes, obtener_mensajes
 from app.features import CONTRACT_OPTIONS, GENDER_OPTIONS, SUBSCRIPTION_OPTIONS
 from app.schemas import (
     ChurnPrediction,
@@ -49,6 +51,12 @@ def cargar_modelos() -> None:
         logger.info("Modelo de sentimiento (BETO) cargado correctamente.")
     except (sentiment_model.ModeloNoEntrenadoError, ImportError) as e:
         logger.warning("Sentimiento no disponible todavía: %s", e)
+
+    try:
+        sentiment_liviano.cargar_modelo()
+        logger.info("Modelo de sentimiento liviano (BETO int8 en ONNX) cargado correctamente.")
+    except (sentiment_model.ModeloNoEntrenadoError, ImportError) as e:
+        logger.warning("Sentimiento liviano no disponible: %s", e)
 
     try:
         cargar_clientes()
@@ -92,6 +100,7 @@ def health() -> dict:
         "status": "ok",
         "churn_model_listo": churn_model.modelo_listo(),
         "sentiment_model_listo": sentiment_model.modelo_listo(),
+        "sentiment_liviano_listo": sentiment_liviano.modelo_listo(),
     }
 
 
@@ -132,6 +141,49 @@ def predict_sentimiento(payload: SentimientoInput) -> dict:
         logger.exception("Error prediciendo sentimiento")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+
+@app.post("/predict/sentimiento/liviano", response_model=SentimientoPrediction)
+def predict_sentimiento_liviano(payload: SentimientoInput) -> dict:
+    if not sentiment_liviano.modelo_listo():
+        raise HTTPException(
+            status_code=503,
+            detail="BETO liviano no está activo. Levanta la API con INSTALL_SENTIMENT_LIVIANO=true (Docker) o ENABLE_SENTIMENT_LIVIANO=true.",
+        )
+    try:
+        return sentiment_liviano.predecir_sentimiento(payload.texto)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Error prediciendo sentimiento (liviano)")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+def modelo_de_sentimiento_activo():
+    """El modelo completo si está cargado; si no, el liviano (por ejemplo en Render). None si no hay ninguno."""
+    if sentiment_model.modelo_listo():
+        return sentiment_model
+    if sentiment_liviano.modelo_listo():
+        return sentiment_liviano
+    return None
+
+
+CLIENTES_POR_PAGINA = 10
+
+
+@app.get("/clientes")
+def cartera_de_clientes(
+    pagina: int = Query(1, ge=1),
+    id: str = Query("", max_length=12, pattern=r"^\d*$", description="Filtra los IDs que empiezan así"),
+) -> dict:
+    """La cartera paginada: así el frontend nunca recibe todos los clientes de una vez."""
+    clientes, total = listar_clientes(pagina, CLIENTES_POR_PAGINA, id)
+    return {
+        "pagina": pagina,
+        "por_pagina": CLIENTES_POR_PAGINA,
+        "total": total,
+        "total_paginas": max(1, -(-total // CLIENTES_POR_PAGINA)),
+        "clientes": clientes,
+    }
+
+
 @app.get("/cliente/{id_cliente}/churn", response_model=ChurnPrediction)
 def churn_por_id(id_cliente: int):
     cliente = buscar_cliente(id_cliente)
@@ -152,8 +204,9 @@ def agregar_mensaje(id_cliente: int, payload: MensajeInput):
 def mensajes_con_sentimiento(id_cliente: int):
     if not buscar_cliente(id_cliente):
         raise HTTPException(status_code=404, detail=f"Cliente {id_cliente} no encontrado")
-    if not sentiment_model.modelo_listo():
+    modelo = modelo_de_sentimiento_activo()
+    if modelo is None:
         raise HTTPException(status_code=503, detail="el modelo de sentimiento no está activo")
     mensajes = obtener_mensajes(id_cliente)
-    analisis = [sentiment_model.predecir_sentimiento(m) for m in mensajes]
+    analisis = [modelo.predecir_sentimiento(m) for m in mensajes]
     return {"id_cliente": id_cliente, "mensajes": mensajes, "analisis": analisis}

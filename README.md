@@ -40,9 +40,9 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 
 ## Demo en línea
 
-<!-- Cuando exista el despliegue, agrega aquí el enlace: - Demo: https://<url-de-banco-futura-web>.onrender.com -->
+- **Demo en línea:** https://banco-futura-web.onrender.com (plan gratis: la API se duerme tras 15 minutos sin visitas y tarda cerca de un minuto en despertar).
 
-El proyecto está preparado para desplegarse en [Render](https://render.com) (plan gratis) con el modelo de churn. El modelo de sentimiento no se despliega allí: BETO y TensorFlow necesitan más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
+El proyecto está preparado para desplegarse en [Render](https://render.com) (plan gratis) con el modelo de churn y el BETO liviano de sentimiento (ver la sección *Dos modelos de sentimiento*). El BETO completo no se despliega allí: BETO con PyTorch y TensorFlow necesita más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
 
 - **Cabe en el plan gratis:** la API usa unos 157 MiB de RAM. Se midió con el contenedor limitado a 512 MiB y 30 peticiones de churn; no hubo cierres por falta de memoria.
 - **Primer acceso lento:** tras 15 minutos sin visitas el servicio de la API se duerme, y la primera visita tarda cerca de un minuto en despertarlo.
@@ -156,6 +156,27 @@ Probando la interfaz, el reclamo *"me gustaria saber si me puedo desvincular a e
 - Solución: el entrenamiento agrega copias sin tildes de cada reseña (*data augmentation*, aplicada solo a train para evitar *data leakage*), y la API quita las tildes antes de predecir. Ahora `PESIMO SERVICIO`, `pésimo servicio` y `Pésimo servicio` dan el mismo resultado.
 
 La función que quita las tildes (`quitar_tildes`) conserva la ñ, y es la misma en el entrenamiento y en la API para que el modelo vea en producción lo mismo que aprendió.
+
+## Dos modelos de sentimiento
+
+El mismo BETO en dos versiones; la liviana no reemplaza a la completa, es una segunda opción para servidores chicos.
+
+| Mismas 800 reseñas de prueba, sin tildes | BETO completo | BETO liviano |
+|---|---|---|
+| Qué es | BETO en PyTorch + cabeza en Keras | BETO exportado a ONNX y cuantizado a int8 + la misma cabeza en NumPy |
+| F1 | 0,886 | 0,876 |
+| Misma respuesta que el completo | — | 98,1 % |
+| Latencia por reseña (CPU) | 28 ms | 5,6 ms |
+| Encoder | 437 MB | 110 MB |
+| Dependencias al predecir | PyTorch + TensorFlow (varios GB) | onnxruntime + tokenizers + numpy |
+| Endpoint | `POST /predict/sentimiento` | `POST /predict/sentimiento/liviano` |
+| Cómo activarlo en Docker | `INSTALL_SENTIMENT=true` | `INSTALL_SENTIMENT_LIVIANO=true` |
+
+### Cómo se hizo
+
+`backend/scripts/export_sentiment_liviano.py` exporta BETO a ONNX, lo cuantiza a int8 (cada peso pasa de 4 bytes a 1) y evalúa los dos modelos con las mismas reseñas de prueba del entrenamiento. El encoder pesa ~110 MB y GitHub no acepta archivos de más de 100 MB, así que se publica en el release `sentimiento-liviano-v1` y el Dockerfile lo descarga verificando su sha256.
+
+En el frontend, el panel de sentimiento tiene un selector entre los dos modelos y desactiva el que no esté cargado.
 
 ## Qué mejoraría con más tiempo
 
