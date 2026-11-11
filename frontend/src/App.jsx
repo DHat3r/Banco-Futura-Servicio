@@ -5,16 +5,42 @@ import SentimentPanel from "./components/SentimentPanel.jsx";
 import { obtenerEstadoAPI, predecirChurn } from "./api.js";
 import ClientePanel from "./components/ClientePanel.jsx";
 
+// En el plan gratis de Render la API se duerme sin visitas y tarda cerca de un minuto en
+// despertar: si /health falla, se reintenta cada 10 s durante 3 minutos antes de rendirse.
+const REINTENTO_MS = 10_000;
+const MAX_INTENTOS = 18;
+
 export default function App() {
   const [resultadoChurn, setResultadoChurn] = useState(null);
   const [errorChurn, setErrorChurn] = useState(null);
   const [loadingChurn, setLoadingChurn] = useState(false);
   const [estadoAPI, setEstadoAPI] = useState(null);
+  const [despertando, setDespertando] = useState(false);
 
   useEffect(() => {
-    obtenerEstadoAPI()
-      .then(setEstadoAPI)
-      .catch(() => setEstadoAPI({ status: "down" }));
+    let cancelado = false;
+    let temporizador;
+
+    async function consultar(intento) {
+      try {
+        const estado = await obtenerEstadoAPI();
+        if (cancelado) return;
+        setEstadoAPI(estado);
+        setDespertando(false);
+      } catch {
+        if (cancelado) return;
+        setEstadoAPI({ status: "down" });
+        const quedanIntentos = intento < MAX_INTENTOS;
+        setDespertando(quedanIntentos);
+        if (quedanIntentos) temporizador = setTimeout(() => consultar(intento + 1), REINTENTO_MS);
+      }
+    }
+
+    consultar(1);
+    return () => {
+      cancelado = true;
+      clearTimeout(temporizador);
+    };
   }, []);
 
   async function manejarEvaluacion(cliente) {
@@ -49,7 +75,9 @@ export default function App() {
             ? "Verificando API…"
             : apiArriba
               ? "API conectada"
-              : "API no disponible"}
+              : despertando
+                ? "Despertando la API…"
+                : "API no disponible"}
         </div>
       </header>
 
