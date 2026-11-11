@@ -12,6 +12,14 @@ def _primer_customer_id() -> int:
     return int(primera_fila["CustomerID"])
 
 
+def test_estado_responde_lo_mismo_que_health(client):
+    # El frontend usa /estado porque algunos bloqueadores de anuncios bloquean "/health".
+    respuesta = client.get("/estado")
+
+    assert respuesta.status_code == 200
+    assert respuesta.json() == client.get("/health").json()
+
+
 def test_health_reporta_churn_listo_y_sentimiento_apagado(client):
     respuesta = client.get("/health")
 
