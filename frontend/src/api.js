@@ -38,6 +38,16 @@ export async function obtenerEstadoAPI() {
   return res.json();
 }
 
+// Una página de la cartera de clientes; filtroId filtra los IDs que empiezan así.
+export async function obtenerCartera(pagina, filtroId = "") {
+  const params = new URLSearchParams({ pagina: String(pagina) });
+  if (filtroId) params.set("id", filtroId);
+  const res = await fetch(`${API_URL}/clientes?${params}`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(`No se pudo cargar la cartera (error ${res.status})`);
+  return data;
+}
+
 export async function churnPorId(id_cliente) {
   const res = await fetch(`${API_URL}/cliente/${id_cliente}/churn`);
   const data = await res.json().catch(() => null);

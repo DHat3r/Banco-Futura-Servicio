@@ -180,6 +180,98 @@ body {
   min-width: 0;
 }
 
+/* ---------- cartera de clientes ---------- */
+
+.busqueda .cartera__total {
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.cartera {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.cartera__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.cartera__tabla th,
+.cartera__tabla td {
+  padding: 9px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.cartera__tabla th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  background: var(--surface-raised);
+}
+
+.cartera__tabla .num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cartera__tabla tbody tr {
+  cursor: pointer;
+}
+
+.cartera__tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.cartera__tabla tbody tr:hover {
+  background: color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
+/* El cliente abierto se marca con el color de la marca, como un expediente sobre la mesa. */
+.cartera__tabla tbody tr.is-elegido {
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.cartera__id {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cartera__id:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.cartera__vacia {
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 12px 0 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
 /* ---------- panel ---------- */
 
 .panel {
