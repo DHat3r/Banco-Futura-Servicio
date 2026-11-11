@@ -22,3 +22,7 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+# BETO liviano: el encoder pesa ~110 MB (GitHub rechaza archivos de más de 100 MB).
+# Se publica en un release y el Dockerfile lo descarga; ver backend/app/sentiment_liviano.py
+backend/artifacts/sentiment_liviano/*.onnx
