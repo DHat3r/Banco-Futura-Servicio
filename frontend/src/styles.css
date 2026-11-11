@@ -651,6 +651,12 @@ body {
   color: var(--ink-faint);
 }
 
+.footer a {
+  color: var(--brand);
+  font-weight: 500;
+  text-underline-offset: 3px;
+}
+
 .fade-in {
   animation: fade-in 0.25s ease-out;
 }
