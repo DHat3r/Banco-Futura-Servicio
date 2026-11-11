@@ -93,7 +93,10 @@ export default function App() {
       <SentimentPanel estadoAPI={estadoAPI} />
       <ClientePanel apiArriba={apiArriba} />
       <footer className="footer">
-        Proyecto académico · Equipo 4 · Data Driven Banking
+        Hecho por{" "}
+        <a href="https://github.com/DHat3r" target="_blank" rel="noopener noreferrer">
+          DHat3r
+        </a>
       </footer>
     </div>
   );
