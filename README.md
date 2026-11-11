@@ -15,10 +15,10 @@
 | Capa | Tecnología |
 |------|------------|
 | Datos y pipeline | Databricks (Free Edition), Lakeflow Pipeline, Delta Lake, arquitectura medallion |
-| Modelos | XGBoost + SHAP, Spark MLlib, BETO (BERT en español) |
+| Modelos | XGBoost + SHAP, Spark MLlib, BETO (BERT en español), BETO cuantizado a int8 con ONNX Runtime |
 | Backend | FastAPI, Pydantic |
 | Frontend | React + Vite |
-| Infraestructura | Docker Compose, nginx, GitHub Actions |
+| Infraestructura | Docker Compose, nginx, GitHub Actions (CI), Render (CD) |
 
 ## Arquitectura
 
@@ -35,7 +35,7 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 | `notebooks/` | Exploración inicial: XGBoost y BERT aplicados al churn |
 | `databricks/` | Pipeline medallion y los dos modelos, orquestados por un Job ([detalles](databricks/README.md)) |
 | `backend/` | API REST que sirve el modelo de churn y el de sentimiento |
-| `frontend/` | Interfaz que junta ambas señales para priorizar clientes |
+| `frontend/` | Interfaz que junta ambas señales para priorizar clientes: evaluación de un cliente, análisis de un mensaje y la cartera de clientes paginada |
 | `docs/` | Documentación de la entrega API + frontend ([detalles](docs/entrega-api-frontend.md)) |
 
 ## Demo en línea
@@ -44,7 +44,8 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 
 El proyecto está preparado para desplegarse en [Render](https://render.com) (plan gratis) con el modelo de churn y el BETO liviano de sentimiento (ver la sección *Dos modelos de sentimiento*). El BETO completo no se despliega allí: BETO con PyTorch y TensorFlow necesita más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
 
-- **Cabe en el plan gratis:** la API usa unos 157 MiB de RAM. Se midió con el contenedor limitado a 512 MiB y 30 peticiones de churn; no hubo cierres por falta de memoria.
+- **Cabe en el plan gratis (512 MB):** con solo churn, la API usa unos 157 MiB de RAM (medido con el contenedor limitado a 512 MiB y 30 peticiones de churn). BETO liviano usa unos 190 MB más, medido en un proceso local; los dos juntos funcionan en Render sin cierres por falta de memoria.
+- **Despliegue continuo (CD):** el Blueprint de Render sigue la rama `main`; cada merge reconstruye y despliega la API y el frontend sin pasos manuales.
 - **Primer acceso lento:** tras 15 minutos sin visitas el servicio de la API se duerme, y la primera visita tarda cerca de un minuto en despertarlo.
 - **Datos de ejemplo:** la demo usa `backend/data/sample_clientes.csv` (la muestra versionada), no el CSV completo de Kaggle.
 
@@ -118,7 +119,7 @@ pip install -r requirements-dev.txt
 pytest -q
 ```
 
-CI (GitHub Actions) ejecuta los tests del backend y el build del frontend en cada push y pull request.
+**CI/CD:** GitHub Actions ejecuta los tests del backend y el build del frontend en cada push y pull request (CI), y al fusionar a `main` Render despliega la nueva versión de la demo (CD).
 
 ## Decisiones técnicas
 
