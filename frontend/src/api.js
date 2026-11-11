@@ -37,7 +37,8 @@ export async function obtenerMetadataCliente() {
 const TIEMPO_LIMITE_HEALTH_MS = 15_000;
 
 export async function obtenerEstadoAPI() {
-  const res = await fetch(`${API_URL}/health`, {
+  // /estado y no /health: algunos bloqueadores de anuncios bloquean las URL con "health".
+  const res = await fetch(`${API_URL}/estado`, {
     signal: AbortSignal.timeout(TIEMPO_LIMITE_HEALTH_MS),
     cache: "no-store", // el estado cambia: nunca usar una respuesta guardada
   });

@@ -94,7 +94,11 @@ app.add_middleware(
 )
 
 
+# /health lo usan Render y Docker para saber si la API está viva. El frontend consulta /estado,
+# que responde lo mismo: algunos bloqueadores de anuncios (Brave, uBlock) bloquean las URL con
+# "health" en el navegador, y la página quedaba en "API no disponible" aunque la API funcionara.
 @app.get("/health")
+@app.get("/estado")
 def health() -> dict:
     return {
         "status": "ok",

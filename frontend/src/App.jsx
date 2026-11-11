@@ -6,7 +6,7 @@ import { obtenerEstadoAPI, predecirChurn } from "./api.js";
 import ClientePanel from "./components/ClientePanel.jsx";
 
 // En el plan gratis de Render la API se duerme sin visitas y tarda cerca de un minuto en
-// despertar. Por eso /health se consulta seguido mientras no responde y espaciado cuando ya
+// despertar. Por eso /estado se consulta seguido mientras no responde y espaciado cuando ya
 // responde (solo para notar si se cae). Los primeros 3 minutos de fallas se muestran como
 // "despertando"; después, como "no disponible", pero se sigue intentando.
 const CADA_MS_DESCONECTADA = 10_000;
