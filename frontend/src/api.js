@@ -32,8 +32,15 @@ export async function obtenerMetadataCliente() {
   return res.json();
 }
 
+// Si la API acepta la conexión pero no contesta (pasa mientras Render la reinicia), sin
+// tiempo límite el fetch esperaría indefinidamente y App dejaría de reintentar.
+const TIEMPO_LIMITE_HEALTH_MS = 15_000;
+
 export async function obtenerEstadoAPI() {
-  const res = await fetch(`${API_URL}/health`);
+  const res = await fetch(`${API_URL}/health`, {
+    signal: AbortSignal.timeout(TIEMPO_LIMITE_HEALTH_MS),
+    cache: "no-store", // el estado cambia: nunca usar una respuesta guardada
+  });
   if (!res.ok) throw new Error("API no disponible");
   return res.json();
 }
