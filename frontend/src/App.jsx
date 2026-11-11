@@ -6,9 +6,12 @@ import { obtenerEstadoAPI, predecirChurn } from "./api.js";
 import ClientePanel from "./components/ClientePanel.jsx";
 
 // En el plan gratis de Render la API se duerme sin visitas y tarda cerca de un minuto en
-// despertar: si /health falla, se reintenta cada 10 s durante 3 minutos antes de rendirse.
-const REINTENTO_MS = 10_000;
-const MAX_INTENTOS = 18;
+// despertar. Por eso /health se consulta seguido mientras no responde y espaciado cuando ya
+// responde (solo para notar si se cae). Los primeros 3 minutos de fallas se muestran como
+// "despertando"; después, como "no disponible", pero se sigue intentando.
+const CADA_MS_DESCONECTADA = 10_000;
+const CADA_MS_CONECTADA = 3 * 60_000;
+const FALLAS_DESPERTANDO = 18; // 18 x 10 s = 3 minutos
 
 export default function App() {
   const [resultadoChurn, setResultadoChurn] = useState(null);
@@ -21,22 +24,23 @@ export default function App() {
     let cancelado = false;
     let temporizador;
 
-    async function consultar(intento) {
+    async function consultar(fallasSeguidas) {
       try {
         const estado = await obtenerEstadoAPI();
         if (cancelado) return;
         setEstadoAPI(estado);
         setDespertando(false);
+        temporizador = setTimeout(() => consultar(0), CADA_MS_CONECTADA);
       } catch {
         if (cancelado) return;
+        const fallas = fallasSeguidas + 1;
         setEstadoAPI({ status: "down" });
-        const quedanIntentos = intento < MAX_INTENTOS;
-        setDespertando(quedanIntentos);
-        if (quedanIntentos) temporizador = setTimeout(() => consultar(intento + 1), REINTENTO_MS);
+        setDespertando(fallas <= FALLAS_DESPERTANDO);
+        temporizador = setTimeout(() => consultar(fallas), CADA_MS_DESCONECTADA);
       }
     }
 
-    consultar(1);
+    consultar(0);
     return () => {
       cancelado = true;
       clearTimeout(temporizador);
@@ -87,7 +91,7 @@ export default function App() {
       </main>
 
       <SentimentPanel estadoAPI={estadoAPI} />
-      <ClientePanel />
+      <ClientePanel apiArriba={apiArriba} />
       <footer className="footer">
         Proyecto académico · Equipo 4 · Data Driven Banking
       </footer>
