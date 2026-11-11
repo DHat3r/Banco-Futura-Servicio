@@ -4,6 +4,8 @@
 
 > Plataforma de extremo a extremo que predice qué clientes de un banco están por irse y prioriza a quién contactar, combinando un modelo de churn (XGBoost) con el sentimiento de sus reclamos (BETO).
 
+**[Probar la demo en línea](https://banco-futura-web.onrender.com)**: en el plan gratis la API se duerme sin visitas, así que la primera vez puede tardar cerca de un minuto en despertar.
+
 ![Mesa de riesgo: formulario del cliente y ficha con el sello de riesgo alto y los factores que más influyeron](docs/capturas/mesa-de-riesgo.png)
 
 | Modo oscuro | Celular |
@@ -42,7 +44,15 @@ notebooks/  (exploración: BERT, primeras pruebas)             ▼
 
 - **Demo en línea:** https://banco-futura-web.onrender.com (plan gratis: la API se duerme tras 15 minutos sin visitas y tarda cerca de un minuto en despertar).
 
-El proyecto está preparado para desplegarse en [Render](https://render.com) (plan gratis) con el modelo de churn y el BETO liviano de sentimiento (ver la sección *Dos modelos de sentimiento*). El BETO completo no se despliega allí: BETO con PyTorch y TensorFlow necesita más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
+Está desplegado en [Render](https://render.com) (plan gratis) con el modelo de churn y el BETO liviano de sentimiento (ver la sección *Dos modelos de sentimiento*). El BETO completo no se despliega allí: BETO con PyTorch y TensorFlow necesita más de 2 GB de RAM y el plan gratis tiene 512 MB. Se prueba en local con `INSTALL_SENTIMENT=true` (ver más abajo).
+
+Además de la ficha de riesgo de arriba, la demo tiene el análisis de un mensaje, con selector entre los dos modelos de sentimiento, y la cartera de clientes:
+
+![Panel de sentimiento: selector de modelo y un reclamo analizado con BETO liviano](docs/capturas/sentimiento.png)
+
+<img src="docs/capturas/cartera.png" alt="Cartera de clientes paginada con un cliente elegido y su ficha de riesgo" width="640">
+
+> Capturas de la versión anterior del diseño en [docs/capturas/v1](docs/capturas/v1).
 
 - **Cabe en el plan gratis (512 MB):** con solo churn, la API usa unos 157 MiB de RAM (medido con el contenedor limitado a 512 MiB y 30 peticiones de churn). BETO liviano usa unos 190 MB más, medido en un proceso local; los dos juntos funcionan en Render sin cierres por falta de memoria.
 - **Despliegue continuo (CD):** el Blueprint de Render sigue la rama `main`; cada merge reconstruye y despliega la API y el frontend sin pasos manuales.
