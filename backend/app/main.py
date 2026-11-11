@@ -19,12 +19,12 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import churn_model, sentiment_liviano, sentiment_model
 from app import db as db_module
-from app.db import buscar_cliente, cargar_clientes, guardar_mensaje, obtener_mensajes
+from app.db import buscar_cliente, cargar_clientes, guardar_mensaje, listar_clientes, obtener_mensajes
 from app.features import CONTRACT_OPTIONS, GENDER_OPTIONS, SUBSCRIPTION_OPTIONS
 from app.schemas import (
     ChurnPrediction,
@@ -163,6 +163,25 @@ def modelo_de_sentimiento_activo():
     if sentiment_liviano.modelo_listo():
         return sentiment_liviano
     return None
+
+
+CLIENTES_POR_PAGINA = 10
+
+
+@app.get("/clientes")
+def cartera_de_clientes(
+    pagina: int = Query(1, ge=1),
+    id: str = Query("", max_length=12, pattern=r"^\d*$", description="Filtra los IDs que empiezan así"),
+) -> dict:
+    """La cartera paginada: así el frontend nunca recibe todos los clientes de una vez."""
+    clientes, total = listar_clientes(pagina, CLIENTES_POR_PAGINA, id)
+    return {
+        "pagina": pagina,
+        "por_pagina": CLIENTES_POR_PAGINA,
+        "total": total,
+        "total_paginas": max(1, -(-total // CLIENTES_POR_PAGINA)),
+        "clientes": clientes,
+    }
 
 
 @app.get("/cliente/{id_cliente}/churn", response_model=ChurnPrediction)
