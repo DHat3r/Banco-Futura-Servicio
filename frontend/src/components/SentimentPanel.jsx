@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Stamp from "./Stamp.jsx";
 import { predecirSentimiento } from "../api.js";
 
@@ -10,21 +10,20 @@ const MODELOS = [
 
 export default function SentimentPanel({ estadoAPI }) {
   const disponibles = MODELOS.filter((m) => estadoAPI?.[m.clave]);
-  const [modelo, setModelo] = useState("completo");
+  const [preferido, setPreferido] = useState("completo");
   const [texto, setTexto] = useState("");
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Si el modelo elegido no está cargado (por ejemplo en Render), se pasa al que sí lo esté.
-  useEffect(() => {
-    if (disponibles.length && !disponibles.some((m) => m.id === modelo)) {
-      setModelo(disponibles[0].id);
-    }
-  }, [disponibles, modelo]);
+  // El modelo que se usa se calcula en cada render: el preferido si está cargado, si no el
+  // primero disponible (en Render, el liviano), y ninguno mientras la API no responda.
+  // Así nunca queda marcado un modelo apagado.
+  const modelo = disponibles.some((m) => m.id === preferido) ? preferido : (disponibles[0]?.id ?? null);
 
   async function analizar(e) {
     e.preventDefault();
+    if (!modelo) return;
     setLoading(true);
     setError(null);
     try {
@@ -60,7 +59,7 @@ export default function SentimentPanel({ estadoAPI }) {
                 checked={modelo === m.id}
                 disabled={!activo}
                 onChange={() => {
-                  setModelo(m.id);
+                  setPreferido(m.id);
                   setResultado(null);
                 }}
               />
@@ -81,10 +80,15 @@ export default function SentimentPanel({ estadoAPI }) {
       />
 
       <div className="sentiment-row">
-        <button type="submit" className="btn btn--secondary" disabled={loading || texto.trim().length < 3}>
+        <button
+          type="submit"
+          className="btn btn--secondary"
+          disabled={loading || !modelo || texto.trim().length < 3}
+        >
           {loading ? "Analizando…" : "Analizar sentimiento"}
         </button>
 
+        {!modelo && <p className="panel__hint">Esperando a que la API cargue un modelo de sentimiento…</p>}
         {error && <p className="error-text">{error}</p>}
 
         {resultado && (
